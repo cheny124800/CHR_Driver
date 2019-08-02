@@ -40,7 +40,7 @@ void data_out(uint8_t *data, uint8_t len)
 	s_buffer[1] = 0xEF;
 	
 	//帧长，一帧数据的长度
-	s_buffer[2] = len+9;
+	s_buffer[2] = len+8;
 	
 	//帧序号
 	s_buffer[3] = seq++;
@@ -62,11 +62,11 @@ void data_out(uint8_t *data, uint8_t len)
 	{
 		sum += s_buffer[i];
 	}
-	s_buffer[len+7] = (uint8_t)sum;			//低字节
-	s_buffer[len+8] = (uint8_t)(sum >> 8);	//高字节
+	s_buffer[len+6] = (uint8_t)sum;			//低字节
+	s_buffer[len+7] = (uint8_t)(sum >> 8);	//高字节
 	
 	//调用串口函数发送
-	ser.write(s_buffer,len+9);
+	ser.write(s_buffer,len+8);
 	
 }
 
@@ -77,12 +77,65 @@ void data_out(uint8_t *data, uint8_t len)
 输    出: null
 日    期：2019.8.1
 作    者： 
-**********************************************************************************************/
-void heartbeat(void)
+***************************************sizeof(GimbalCtl_data)*******************************************************/
+void heartbeat_send(void)
 {
-	uint8_t heartbeat_buffer[9];
+	uint8_t heartbeat_buffer[10];
 	memset(heartbeat_buffer,0,sizeof(heartbeat_buffer));
 	data_out(heartbeat_buffer,sizeof(heartbeat_buffer));
+}
+
+
+/**********************************************************************************************
+函数名称: GimbalCtl_send(void)
+功    能: 云台控制包
+输    入: null
+输    出: null
+备    注：输入数据为处理之后的数据，便于传输 
+**********************************************************************************************/
+struct GimbalCtl_TypeDef{
+	int16_t pitch;
+	int16_t yaw;
+	int16_t zoom;
+	int16_t focus;
+	char  home;
+	char  TakePicture;
+	char  cameraModeChange;
+};
+
+void GimbalCtl_send(void)
+{
+	uint8_t GimbalCtl_buffer[11+1];
+	GimbalCtl_TypeDef GC_data;
+	
+	memset(GimbalCtl_buffer,0,sizeof(GimbalCtl_buffer));
+	
+	
+	//测试用，后期待删除
+	GimbalCtl_data.pitch = -1.1;
+	GimbalCtl_data.yaw = 2.2;
+	GimbalCtl_data.zoom = -3.3;
+	GimbalCtl_data.focus = 4.4;
+	GimbalCtl_data.home = 5;
+	GimbalCtl_data.TakePicture = 6;
+	GimbalCtl_data.cameraModeChange = 7;
+	
+	//消息包编号
+	GimbalCtl_buffer[0]=0x11;
+	
+	//消息数据
+	GC_data.pitch = GimbalCtl_data.pitch*10;
+	GC_data.yaw = GimbalCtl_data.yaw*10;
+	GC_data.zoom = GimbalCtl_data.zoom*10;
+	GC_data.focus = GimbalCtl_data.focus*10;
+	GC_data.home = GimbalCtl_data.home;
+	GC_data.TakePicture = GimbalCtl_data.TakePicture;
+	GC_data.cameraModeChange = GimbalCtl_data.cameraModeChange;
+
+	
+	memcpy(GimbalCtl_buffer+1,&GC_data,sizeof(GimbalCtl_buffer));
+		
+	data_out(GimbalCtl_buffer,sizeof(GimbalCtl_buffer));
 }
 
 /**********************************************************************************************
@@ -163,11 +216,13 @@ int main(int argc, char** argv)
     debug_100ms++;
     if(debug_100ms >= 5) //5*20ms=100ms
     {
-     	std::cout << " b1:" << debug_break[0]<< " b2:" << debug_break[1]<< " b3:" << debug_break[2]  << "\r\n";	
+     	//std::cout << " b1:" << debug_break[0]<< " b2:" << debug_break[1]<< " b3:" << debug_break[2]  << "\r\n";	
       	//std::cout << "f1:" << debug_break_float[0]<< " f2:" << debug_break_float[1] << " f3:" << debug_break_float[2]  << "\r\n";
-      	debug_100ms=0;    
+      	std::cout << " b1:" << sizeof(GimbalCtl_data)<< " b2:" << sizeof(GimbalCtl_data)<< " b3:" << debug_break[2]  << "\r\n";	
+		
+		debug_100ms=0;    
    
-		heartbeat();
+		heartbeat_send();
 	}
 	  
     ros::spinOnce();
