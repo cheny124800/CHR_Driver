@@ -19,7 +19,7 @@ roblink_driver::GimbalCtl GimbalCtl_data;//全局变量，解析后数据
 int debug_break[10];
 float debug_break_float[10];
 
-  uint8_t serial_buffer[1024];
+uint8_t serial_buffer[1024];
 /**********************************************************************************************
 函数名称: data_out(uint8_t *data, uint8_t len)
 功    能: 数据打包
@@ -94,32 +94,37 @@ void heartbeat_send(void)
 输    出: null
 备    注：输入数据为处理之后的数据，便于传输 
 **********************************************************************************************/
+#pragma pack(1)//设定为 1 字节对齐
 struct GimbalCtl_TypeDef{
 	int16_t pitch;
 	int16_t yaw;
 	int16_t zoom;
 	int16_t focus;
-	char  home;
-	char  TakePicture;
-	char  cameraModeChange;
+	uint8_t  home;
+	uint8_t  TakePicture;
+	uint8_t  cameraModeChange;
 };
+#pragma pack()
 
 void GimbalCtl_send(void)
 {
-	uint8_t GimbalCtl_buffer[11+1];
+
 	GimbalCtl_TypeDef GC_data;
+	uint8_t GimbalCtl_buffer[sizeof(GC_data)+1];
+
 	
 	memset(GimbalCtl_buffer,0,sizeof(GimbalCtl_buffer));
 	
 	
 	//测试用，后期待删除
-	GimbalCtl_data.pitch = -1.1;
-	GimbalCtl_data.yaw = 2.2;
-	GimbalCtl_data.zoom = -3.3;
-	GimbalCtl_data.focus = 4.4;
+	GimbalCtl_data.pitch = 0.3;
+	GimbalCtl_data.yaw = 3.4;
+	GimbalCtl_data.zoom = 5.1;
+	GimbalCtl_data.focus = 3.4;
 	GimbalCtl_data.home = 5;
 	GimbalCtl_data.TakePicture = 6;
 	GimbalCtl_data.cameraModeChange = 7;
+
 	
 	//消息包编号
 	GimbalCtl_buffer[0]=0x11;
@@ -132,11 +137,30 @@ void GimbalCtl_send(void)
 	GC_data.home = GimbalCtl_data.home;
 	GC_data.TakePicture = GimbalCtl_data.TakePicture;
 	GC_data.cameraModeChange = GimbalCtl_data.cameraModeChange;
-
 	
 	memcpy(GimbalCtl_buffer+1,&GC_data,sizeof(GimbalCtl_buffer));
 		
 	data_out(GimbalCtl_buffer,sizeof(GimbalCtl_buffer));
+}
+
+
+void GimbalCtl_decode(void)
+{
+	
+	GimbalCtl_TypeDef GC_data;
+	uint8_t GC_buffer[sizeof(GC_data)];
+	memcpy(GC_buffer, serial_buffer+7, sizeof(GC_data));	
+	memcpy(&GC_data,GC_buffer,sizeof(GC_buffer));
+
+	GimbalCtl_data.pitch = GC_data.pitch*0.1;
+	GimbalCtl_data.yaw = GC_data.yaw*0.1;
+	GimbalCtl_data.zoom = GC_data.zoom*0.1;
+	GimbalCtl_data.home = GC_data.home;
+	GimbalCtl_data.TakePicture = GC_data.TakePicture;
+	GimbalCtl_data.cameraModeChange = GC_data.cameraModeChange;
+	
+	std::cout  << " out:"  << GimbalCtl_data.pitch << ", " << GimbalCtl_data.yaw<< ", " << GimbalCtl_data.zoom ;
+	std::cout  << ", "  << GimbalCtl_data.home << ", " << GimbalCtl_data.TakePicture<< ", " << GimbalCtl_data.cameraModeChange  << "\r\n";
 }
 
 
@@ -163,12 +187,7 @@ void  RecePro(void)
 	{
 		cSum += serial_buffer[i];
 	}
-	//std::cout << std::hex << (cSum & 0xff) << " ";	
-	//std::cout << std::hex << (serial_buffer[i] & 0xff) << " ";
-	//std::cout << std::hex << ((cSum >> 8) & 0xff) << " ";
-	//std::cout << std::hex << (serial_buffer[i+1] & 0xff) << " ";
-	//std::cout << std::endl;
-	if((cSum & 0xff) != serial_buffer[i]  && ((cSum >> 8) & 0xff)  != (serial_buffer[i+1] & 0xff))
+	if((cSum & 0xff) != (serial_buffer[i] & 0xff)  && ((cSum >> 8) & 0xff)  != (serial_buffer[i+1] & 0xff))
 	{
 		return;
 	}
@@ -183,6 +202,7 @@ void  RecePro(void)
 	{
 		//云台控制
 		debug_break[3]++;
+		GimbalCtl_decode();
 	}
 
 }
@@ -259,7 +279,7 @@ int main(int argc, char** argv)
     debug_100ms++;
     if(debug_100ms >= 5) //5*20ms=100ms
     {
-     	std::cout << " b1:" << debug_break[2]<< " b2:" << debug_break[3]<< " b3:" << debug_break[4]  << "\r\n";	
+     	//std::cout << " b1:" << debug_break[2]<< " b2:" << debug_break[3]<< " b3:" << debug_break[4]  << "\r\n";	
       	//std::cout << "f1:" << debug_break_float[0]<< " f2:" << debug_break_float[1] << " f3:" << debug_break_float[2]  << "\r\n";
       	//std::cout << " b1:" << sizeof(GimbalCtl_data)<< " b2:" << sizeof(GimbalCtl_data)<< " b3:" << debug_break[2]  << "\r\n";	
 		
