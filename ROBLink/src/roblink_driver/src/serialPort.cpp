@@ -18,8 +18,8 @@ serial::Serial ser; //声明串口对象
 roblink_driver::GimbalCtl GimbalCtl_data;//全局变量，解析后数据
 int debug_break[10];
 float debug_break_float[10];
-
 uint8_t serial_buffer[1024];
+
 /**********************************************************************************************
 函数名称: data_out(uint8_t *data, uint8_t len)
 功    能: 数据打包
@@ -117,9 +117,9 @@ void GimbalCtl_send(void)
 	
 	
 	//测试用，后期待删除
-	GimbalCtl_data.pitch = 0.3;
-	GimbalCtl_data.yaw = 3.4;
-	GimbalCtl_data.zoom = 5.1;
+	GimbalCtl_data.pitch = -0.3;
+	GimbalCtl_data.yaw = -0.5;
+	GimbalCtl_data.zoom = -5.1;
 	GimbalCtl_data.focus = 3.4;
 	GimbalCtl_data.home = 5;
 	GimbalCtl_data.TakePicture = 6;
@@ -175,19 +175,23 @@ void GimbalCtl_decode(void)
 void  RecePro(void)
 {
 	uint16_t cSum;
+	uint8_t cSum_L,cSum_H;
 	int i=0;				
 	
 	//帧头校验
 	if(serial_buffer[0]!=0XFE && serial_buffer[1]!=0xEF) 
 	{		
 		return;
-	}
+	}	
+
 	//和校验
 	for(i=0;i<serial_buffer[2]-2;i++)
 	{
 		cSum += serial_buffer[i];
 	}
-	if((cSum & 0xff) != (serial_buffer[i] & 0xff)  && ((cSum >> 8) & 0xff)  != (serial_buffer[i+1] & 0xff))
+	cSum_L = (uint8_t)cSum; //低字节
+	cSum_H = (uint8_t)(cSum >> 8);	//高字节
+	if(cSum_L != serial_buffer[i]  && cSum_H != serial_buffer[i+1])
 	{
 		return;
 	}
@@ -204,6 +208,7 @@ void  RecePro(void)
 		debug_break[3]++;
 		GimbalCtl_decode();
 	}
+	
 
 }
 
