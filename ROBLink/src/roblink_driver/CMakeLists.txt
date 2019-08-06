@@ -156,6 +156,10 @@ add_executable(serialPort src/serialPort.cpp)
 target_link_libraries(serialPort ${catkin_LIBRARIES})
 add_dependencies(serialPort ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_executable(Q10F src/Q10F.cpp)
+target_link_libraries(Q10F ${catkin_LIBRARIES})
+add_dependencies(Q10F ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 add_executable(listener src/listener.cpp)
 target_link_libraries(listener ${catkin_LIBRARIES})
 add_dependencies(listener ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

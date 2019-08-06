@@ -18,6 +18,7 @@ serial::Serial ser; //声明串口对象
 roblink_driver::GimbalCtl GimbalCtl_data;//全局变量，解析后数据
 int debug_break[10];
 float debug_break_float[10];
+ros::Publisher GimbalCtl_pub;
 
 
 /**********************************************************************************************
@@ -166,6 +167,8 @@ void GimbalCtl_decode(uint8_t *data)
 	//调试用，后期待删除
 	std::cout  << " out:"  << GimbalCtl_data.pitch << ", " << GimbalCtl_data.yaw << ", " << GimbalCtl_data.zoom << ", " << GimbalCtl_data.focus ;
 	std::cout  << ", "  << GimbalCtl_data.home << ", " << GimbalCtl_data.TakePicture<< ", " << GimbalCtl_data.cameraModeChange  << "\r\n";
+	
+	GimbalCtl_pub.publish(GimbalCtl_data);
 }
 
 
@@ -258,7 +261,7 @@ int main(int argc, char** argv)
   //声明节点句柄
   ros::NodeHandle nh;
   //注册Publisher到话题GimbalCtl
-  ros::Publisher GimbalCtl_pub = nh.advertise<roblink_driver::GimbalCtl>("GimbalCtl",1000);
+  GimbalCtl_pub = nh.advertise<roblink_driver::GimbalCtl>("GimbalCtl",1000);
   try
   {
     //串口设置
@@ -282,8 +285,8 @@ int main(int argc, char** argv)
     return -1;
   }
 
-  //设置循环的频率 50HZ 20ms 要求循环频率大于数据接收频率
-  ros::Rate loop_rate(50);
+  //设置循环的频率 100HZ 10ms 要求循环频率大于数据接收频率
+  ros::Rate loop_rate(100);
 
   while (ros::ok())
   {
@@ -335,7 +338,7 @@ int main(int argc, char** argv)
     //断点数据分析，后期待删除
     static int debug_100ms=0;
     debug_100ms++;
-    if(debug_100ms >= 5) //5*20ms=100ms
+    if(debug_100ms >= 10) //10*10ms=100ms
     {
      	//std::cout << std::dec << " b1:" << debug_break[0]<< " b2:" << debug_break[1]<< " len_sub:" << len_sub << " len:" << serial_len  << "\r\n";	
       	//std::cout << "f1:" << debug_break_float[0]<< " f2:" << debug_break_float[1] << " f3:" << debug_break_float[2]  << "\r\n";
