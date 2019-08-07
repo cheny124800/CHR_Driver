@@ -1,0 +1,7 @@
+float32 pitch
+float32 yaw
+float32 zoom
+float32 focus
+uint16  home
+uint16  TakePicture
+uint16  cameraModeChange
