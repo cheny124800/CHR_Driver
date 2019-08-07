@@ -1,7 +1,7 @@
 #coding=utf-8
 from __future__ import print_function
 import rospy
-from cam_trl.msg import GimbalCtl
+from roblink_driver.msg import GimbalCtl
 import sys, select, termios, tty
 
 
@@ -49,7 +49,7 @@ def getKey():
  
 if __name__ == '__main__':
 	settings = termios.tcgetattr(sys.stdin)
-	pub = rospy.Publisher('/Cam_Ctr', GimbalCtl, queue_size = 1)
+	pub = rospy.Publisher('/GimbalCtl', GimbalCtl, queue_size = 1)
 	rospy.init_node('Send_Cam_Ctr_Message', anonymous = True)
 	pitch_speed = rospy.get_param("~pitch_speed", 5)
 	yaw_speed = rospy.get_param("~yaw_speed", 5)
