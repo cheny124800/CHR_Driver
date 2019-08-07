@@ -23,17 +23,15 @@
 //全局变量
 serial::Serial serial_Q10f; //声明串口对象
 
-
-
 uint8_t Q10FTxBuffer[256];
 uint8_t Q10FTxnum=0;
 
-//按速度转动的VISCA协议
-uint8_t UpVel[9]			=		{0x81,0x01,0x06,0x01,0x00,0x10,0x03,0x01,0xff};
-uint8_t DownVel[9]		=		{0x81,0x01,0x06,0x01,0x00,0x10,0x03,0x02,0xff};
-uint8_t RightVel[9]	=		{0x81,0x01,0x06,0x01,0x10,0x00,0x02,0x03,0xff};
-uint8_t LeftVel[9]		=		{0x81,0x01,0x06,0x01,0x10,0x00,0x01,0x03,0xff};
-uint8_t StopVel[9]		= 	{0x81,0x01,0x06,0x01,0x00,0x00,0x03,0x03,0xff};
+//按角度
+uint8_t UpAng[9]		=		{0x81,0x01,0x0A,0x01,0x00,0x00,0x03,0x01,0xff};  //81 01 0A 01 00 32 03 01 FF
+uint8_t DownAng[9]		=		{0x81,0x01,0x0A,0x01,0x00,0x00,0x03,0x02,0xff};
+uint8_t RightAng[9]		=		{0x81,0x01,0x0A,0x01,0x00,0x00,0x02,0x03,0xff};
+uint8_t LeftAng[9]		=		{0x81,0x01,0x0A,0x01,0x00,0x00,0x01,0x03,0xff};
+uint8_t StopAng[9]		= 		{0x81,0x01,0x0A,0x01,0x00,0x00,0x03,0x03,0xff};
 
 //相机变倍
 uint8_t ZoomOut[7]		=	{0xff,0x01,0x00,0x40,0x00,0x00,0x41};
@@ -94,7 +92,7 @@ uint8_t cmd_follow_yaw_enable[11]		=     {0x3E,0x1F,0x06,0x25,0x01,0x1F,0x01,0x0
 bool Q10FInit(void)
 {
     Q10FTxnum=0;
-		//Q10FHomePosition();
+	//Q10FHomePosition();
     return true;
 }
 
@@ -110,33 +108,33 @@ uint8_t Check8Bit(uint8_t Input[],uint8_t num)
 }
 
 
-//硬件最大的速度是63，正常的速度应该是0-10
-bool Q10FRotateSpeed(uint8_t type,uint8_t speed)
+//云台姿态控制，角度控制
+bool Q10FRotateSpeed(uint8_t type,uint8_t angle)
 {
-    if(speed>20)speed=20;
+    if(angle>180)angle=180;
     if(type==Q10F_UP)
     {
-        UpVel[5]=speed;
-		serial_Q10f.write(UpVel,9);
+        UpAng[5]=angle;
+		serial_Q10f.write(UpAng,9);
     }
     else if(type==Q10F_DOWN)
     {
-        DownVel[5]=speed;
-        serial_Q10f.write(DownVel,9);
+        DownAng[5]=angle;
+        serial_Q10f.write(DownAng,9);
     }
     else if(type==Q10F_LEFT)
     {
-        LeftVel[4]=speed;     
-        serial_Q10f.write(LeftVel,9);
+        LeftAng[5]=angle;     
+        serial_Q10f.write(LeftAng,9);
     }
     else if(type==Q10F_RIGHT)
     {
-        RightVel[4]=speed;      
-        serial_Q10f.write(RightVel,9);
+        RightAng[5]=angle;      
+        serial_Q10f.write(RightAng,9);
     }
     else if(type==Q10F_STOP)
     {
-        serial_Q10f.write(StopVel,9);
+        serial_Q10f.write(StopAng,9);
     }
     else
     {
@@ -222,13 +220,176 @@ bool Q10FHomePosition(void)
 	return true;
 }
 
+int q10f_pitch=0;
+int q10f_yaw=0;
+int q10f_zoom=0;
+int q10f_focus=0;
+int q10f_home=0;
+int q10f_TakePicture=0;
+int q10f_cameraModeChange=0;
+int stop_zoom_flag=0;
+int stop_focus_flag=0;
 
+
+void display_q10f_status(void)
+{
+	
+	std::cout << "pit:" << q10f_pitch << "\ty:" << q10f_yaw << "\tzoom:" << q10f_zoom << "\tfocus:" << q10f_focus;
+	std::cout << "\thome:" << q10f_home << " takePic:" << q10f_TakePicture<< " modeC:" << q10f_cameraModeChange << "\r\n";
+}
 
 void chatterCallback(const roblink_driver::GimbalCtl::ConstPtr& msg)
 {
-    std::cout  << " out:"  << msg->pitch << ", " << msg->yaw << ", " << msg->zoom << ", " << msg->focus ;
-	std::cout  << ", "  << msg->home << ", " << msg->TakePicture<< ", " << msg->cameraModeChange  << "\r\n";
-	Q10FHomePosition();
+
+	uint8_t temp;
+	q10f_home=msg->home;
+	q10f_TakePicture=msg->TakePicture;
+	q10f_cameraModeChange=msg->cameraModeChange;
+	
+	//俯仰控制
+	if(msg->pitch != 0)
+	{
+		q10f_pitch += msg->pitch;
+		
+		if(q10f_pitch>60)
+		{
+			q10f_pitch=60;
+		}
+		if(q10f_pitch<-90)
+		{
+			q10f_pitch=-90;
+		}
+		
+		if(q10f_pitch>0)
+		{
+			temp = (uint8_t)q10f_pitch;
+			Q10FRotateSpeed(Q10F_UP,temp);
+		}
+		else
+		{
+			temp = (uint8_t)(-q10f_pitch);
+			Q10FRotateSpeed(Q10F_DOWN,temp);
+		}
+		
+		display_q10f_status();
+		
+		return;
+	}
+	
+	//航向控制
+	if(msg->yaw != 0)
+	{
+		q10f_yaw += msg->yaw;
+		
+		if(q10f_yaw>180)
+		{
+			q10f_yaw=180;
+		}
+		if(q10f_yaw<-180)
+		{
+			q10f_yaw=-180;
+		}
+		
+		if(q10f_yaw>0)
+		{
+			temp = (uint8_t)q10f_yaw;
+			Q10FRotateSpeed(Q10F_RIGHT,temp);
+		}
+		else
+		{
+			temp = (uint8_t)(-q10f_yaw);
+			Q10FRotateSpeed(Q10F_LEFT,temp);
+		}
+		display_q10f_status();
+		return;
+	}
+	
+	//变倍
+	if(msg->zoom != 0)
+	{
+		q10f_zoom += msg->zoom;
+		
+		if(q10f_zoom>10)
+		{
+			q10f_zoom=10;
+		}
+		if(q10f_zoom<0)
+		{
+			q10f_zoom=0;
+		}
+		
+		if(msg->zoom>0)
+		{
+			Q10FCameraZoomIn();			
+		}
+		else
+		{
+			Q10FCameraZoomOut();				
+		}
+		
+		stop_zoom_flag=40;	//40*10ms;
+
+		display_q10f_status();
+		return;
+	}
+	
+	//变焦
+	if(msg->focus != 0)
+	{
+		q10f_focus += msg->focus;
+		
+		if(q10f_focus>10)
+		{
+			q10f_focus=10;
+		}
+		if(q10f_focus<0)
+		{
+			q10f_focus=0;
+		}
+		
+		if(msg->focus>0)
+		{
+			Q10FfocusIn();			
+		}
+		else
+		{
+			Q10FfocusOut();				
+		}
+		
+		stop_focus_flag=20;	//20*10ms;
+
+		display_q10f_status();
+		return;
+	}
+	
+	
+	//拍照/录像
+	if(msg->TakePicture!= 0)
+	{
+		Q10FTakePicture();
+		display_q10f_status();
+		return;		
+	}
+	
+	//拍照录像模式切换
+	if(msg->cameraModeChange!= 0)
+	{
+		Q10FCameraModeChange();
+		display_q10f_status();
+		return;
+	}	
+	
+	//回中
+	if(msg->home!= 0)
+	{
+		q10f_pitch=0;
+		q10f_yaw=0;
+		q10f_zoom=0;
+		q10f_focus=0;
+		Q10FHomePosition();
+	}
+			
+	display_q10f_status();
 }
 
 int main(int argc, char **argv)
@@ -240,7 +401,7 @@ int main(int argc, char **argv)
 	try
   	{
     	//串口设置
-    	serial_Q10f.setPort("/dev/ttyS1");
+    	serial_Q10f.setPort("/dev/ttyUSB0");
     	serial_Q10f.setBaudrate(115200);
     	serial::Timeout to = serial::Timeout::simpleTimeout(1000);
     	serial_Q10f.setTimeout(to);
@@ -258,10 +419,31 @@ int main(int argc, char **argv)
   	else
   	{	
     	return -1;
-  	}	
+  	}
+	Q10FHomePosition();
+	
+	//设置循环的频率 100HZ 10ms 要求循环频率大于数据接收频率
+  	ros::Rate loop_rate(100);
+	while (ros::ok())
+	{	
+		if(stop_zoom_flag>0)
+		{
+			stop_zoom_flag--;
+			if(stop_zoom_flag==0)
+				Q10FCameraZoomStop();	
+		}
 		
-    ros::spin();
-    return 0;
+		if(stop_focus_flag>0)
+		{
+			stop_focus_flag--;
+			if(stop_focus_flag==0)
+				Q10FfocusStop();	
+		}
+				
+		ros::spinOnce();
+    	loop_rate.sleep();
+	}
+
 }
 
 
