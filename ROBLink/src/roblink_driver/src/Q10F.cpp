@@ -222,14 +222,14 @@ bool Q10FHomePosition(void)
 
 int q10f_pitch=0;
 int q10f_yaw=0;
-int q10f_zoom=0;
+int q10f_zoom=1;
 int q10f_focus=0;
 int q10f_home=0;
 int q10f_TakePicture=0;
 int q10f_cameraModeChange=0;
 int stop_zoom_flag=0;
 int stop_focus_flag=0;
-
+int take_picture_2s_flag=0;
 
 void display_q10f_status(void)
 {
@@ -281,13 +281,13 @@ void chatterCallback(const roblink_driver::GimbalCtl::ConstPtr& msg)
 	{
 		q10f_yaw += msg->yaw;
 		
-		if(q10f_yaw>180)
+		if(q10f_yaw>140)
 		{
-			q10f_yaw=180;
+			q10f_yaw=140;
 		}
-		if(q10f_yaw<-180)
+		if(q10f_yaw<-140)
 		{
-			q10f_yaw=-180;
+			q10f_yaw=-140;
 		}
 		
 		if(q10f_yaw>0)
@@ -313,22 +313,13 @@ void chatterCallback(const roblink_driver::GimbalCtl::ConstPtr& msg)
 		{
 			q10f_zoom=10;
 		}
-		if(q10f_zoom<0)
+		if(q10f_zoom<1)
 		{
-			q10f_zoom=0;
+			q10f_zoom=1;
 		}
+				
+		Q10FZoomTableCtrl(q10f_zoom);
 		
-		if(msg->zoom>0)
-		{
-			Q10FCameraZoomIn();			
-		}
-		else
-		{
-			Q10FCameraZoomOut();				
-		}
-		
-		stop_zoom_flag=40;	//40*10ms;
-
 		display_q10f_status();
 		return;
 	}
@@ -366,7 +357,17 @@ void chatterCallback(const roblink_driver::GimbalCtl::ConstPtr& msg)
 	//拍照/录像
 	if(msg->TakePicture!= 0)
 	{
-		Q10FTakePicture();
+		//Q10FTakePicture();
+		
+		if(take_picture_2s_flag==0)
+		{
+			take_picture_2s_flag=1;
+		}
+		else
+		{
+			take_picture_2s_flag=0;
+		}
+		
 		display_q10f_status();
 		return;		
 	}
@@ -401,7 +402,7 @@ int main(int argc, char **argv)
 	try
   	{
     	//串口设置
-    	serial_Q10f.setPort("/dev/ttyUSB0");
+    	serial_Q10f.setPort("/dev/ttyS1");
     	serial_Q10f.setBaudrate(115200);
     	serial::Timeout to = serial::Timeout::simpleTimeout(1000);
     	serial_Q10f.setTimeout(to);
@@ -425,21 +426,27 @@ int main(int argc, char **argv)
 	//设置循环的频率 100HZ 10ms 要求循环频率大于数据接收频率
   	ros::Rate loop_rate(100);
 	while (ros::ok())
-	{	
-		if(stop_zoom_flag>0)
-		{
-			stop_zoom_flag--;
-			if(stop_zoom_flag==0)
-				Q10FCameraZoomStop();	
-		}
-		
+	{			
 		if(stop_focus_flag>0)
 		{
 			stop_focus_flag--;
 			if(stop_focus_flag==0)
 				Q10FfocusStop();	
 		}
-				
+		
+		
+		//定时2s		
+		static int loop_2s=0;
+    	loop_2s++;
+    	if(loop_2s >= 200) //200*10ms=2000ms
+    	{
+			loop_2s=0;   
+			if(take_picture_2s_flag==1 ) //拍照开关打开
+			{
+				Q10FTakePicture();
+			}
+		}
+					
 		ros::spinOnce();
     	loop_rate.sleep();
 	}
