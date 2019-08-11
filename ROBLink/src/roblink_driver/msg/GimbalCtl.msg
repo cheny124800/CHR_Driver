@@ -5,3 +5,4 @@ float32 focus
 uint16  home
 uint16  TakePicture
 uint16  cameraModeChange
+uint16  yawfollow

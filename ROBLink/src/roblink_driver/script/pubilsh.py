@@ -17,15 +17,17 @@ float32 focus  'r f'
 uint16  home  'z'
 uint16  TakePicture 'x'
 uint16  cameraModeChange 'c'
+uint16  yawfollow 'y'
 ---------------------------
 CTRL-C to quit
 """
 
 
 StatusBindings = {
-        'z':(1,0,0),	#home
-        'x':(0,1,0),	#takePicte
-    	'c':(0,0,1),	#ModeChange
+        'z':(1,0,0,0),	#home
+        'x':(0,1,0,0),	#takePicte
+    	'c':(0,0,1,0),	#ModeChange
+		'y':(0,0,0,1),	#yaw follow
     }
 
 ValueBindings={
@@ -67,6 +69,7 @@ if __name__ == '__main__':
 				msg.home = StatusBindings[key][0]
 				msg.TakePicture = StatusBindings[key][1]
 				msg.cameraModeChange = StatusBindings[key][2]
+				msg.yawfollow = StatusBindings[key][3]
 
 			elif key in ValueBindings.keys():
 				msg.pitch = ValueBindings[key][0]*pitch_speed

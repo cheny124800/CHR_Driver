@@ -86,7 +86,7 @@ uint8_t homePosition[9]		=	{0x81,0x01,0x0A,0x01,0x00,0x00,0x03,0x03,0xFF};
 
 //航向跟随控制
 uint8_t cmd_follow_yaw_disable[11]	  =     {0x3E,0x1F,0x06,0x25,0x01,0x1F,0x00,0x00,0x00,0x00,0x20};
-uint8_t cmd_follow_yaw_enable[11]		=     {0x3E,0x1F,0x06,0x25,0x01,0x1F,0x01,0x00,0x00,0x00,0x21};
+uint8_t cmd_follow_yaw_enable[11]	  =     {0x3E,0x1F,0x06,0x25,0x01,0x1F,0x01,0x00,0x00,0x00,0x21};
 
 
 bool Q10FInit(void)
@@ -220,6 +220,20 @@ bool Q10FHomePosition(void)
 	return true;
 }
 
+
+bool Q10FHYawFollowEnable(void)
+{
+  serial_Q10f.write(cmd_follow_yaw_enable,11);
+	//delay_us(2);
+	return true;
+}
+bool Q10FHYawFollowDisable(void)
+{
+  serial_Q10f.write(cmd_follow_yaw_disable,11);
+	//delay_us(2);
+	return true;
+}
+
 int q10f_pitch=0;
 int q10f_yaw=0;
 int q10f_zoom=1;
@@ -227,6 +241,7 @@ int q10f_focus=0;
 int q10f_home=0;
 int q10f_TakePicture=0;
 int q10f_cameraModeChange=0;
+int q10f_yawfollow=0;
 int stop_zoom_flag=0;
 int stop_focus_flag=0;
 int take_picture_2s_flag=0;
@@ -235,7 +250,7 @@ void display_q10f_status(void)
 {
 	
 	std::cout << "pit:" << q10f_pitch << "\ty:" << q10f_yaw << "\tzoom:" << q10f_zoom << "\tfocus:" << q10f_focus;
-	std::cout << "\thome:" << q10f_home << " takePic:" << q10f_TakePicture<< " modeC:" << q10f_cameraModeChange << "\r\n";
+	std::cout << "\thome:" << q10f_home << " takePic:" << q10f_TakePicture<< " modeC:" << q10f_cameraModeChange<< " yawf:" << q10f_yawfollow  << "\r\n";
 }
 
 void chatterCallback(const roblink_driver::GimbalCtl::ConstPtr& msg)
@@ -245,6 +260,7 @@ void chatterCallback(const roblink_driver::GimbalCtl::ConstPtr& msg)
 	q10f_home=msg->home;
 	q10f_TakePicture=msg->TakePicture;
 	q10f_cameraModeChange=msg->cameraModeChange;
+
 	
 	//俯仰控制
 	if(msg->pitch != 0)
@@ -385,10 +401,26 @@ void chatterCallback(const roblink_driver::GimbalCtl::ConstPtr& msg)
 	{
 		q10f_pitch=0;
 		q10f_yaw=0;
-		q10f_zoom=0;
-		q10f_focus=0;
 		Q10FHomePosition();
+		display_q10f_status();
+		return;
 	}
+	
+	//航向跟随
+	if(msg->yawfollow!= 0)
+	{
+		if(q10f_yawfollow==1)
+		{
+			Q10FHYawFollowDisable();
+			q10f_yawfollow = 0;
+		}
+		else
+		{
+			Q10FHYawFollowEnable();
+			q10f_yawfollow = 1;
+		}
+		
+	}	
 			
 	display_q10f_status();
 }
@@ -402,7 +434,7 @@ int main(int argc, char **argv)
 	try
   	{
     	//串口设置
-    	serial_Q10f.setPort("/dev/ttyS1");
+    	serial_Q10f.setPort("/dev/ttyUSB0");
     	serial_Q10f.setBaudrate(115200);
     	serial::Timeout to = serial::Timeout::simpleTimeout(1000);
     	serial_Q10f.setTimeout(to);
@@ -433,8 +465,7 @@ int main(int argc, char **argv)
 			if(stop_focus_flag==0)
 				Q10FfocusStop();	
 		}
-		
-		
+				
 		//定时2s		
 		static int loop_2s=0;
     	loop_2s++;
