@@ -1,7 +1,7 @@
 #coding=utf-8
 from __future__ import print_function
 import rospy
-from cam_trl.msg import GimbalCtl
+from roblink_driver.msg import GimbalCtl
 import sys, select, termios, tty
 
 
@@ -10,29 +10,31 @@ Reading from the keyboard  and Publishing to Cam_Ctr!
 ---------------------------
 Camera Control:
 
-float32 pitch 'q'
-float32 yaw   'a'
-float32 zoom  'w'
-float32 focus  'e' 
-uint16  home  's'
-uint16  TakePicture 'd'
-uint16  cameraModeChange 'f'
+float32 pitch 'q a'
+float32 yaw   'w s'
+float32 zoom  'e d'
+float32 focus  'r f' 
+uint16  home  'z'
+uint16  TakePicture 'x'
+uint16  cameraModeChange 'c'
+uint16  yawfollow 'y'
 ---------------------------
 CTRL-C to quit
 """
 
 
 StatusBindings = {
-        'z':(1,0,0),
-        'x':(0,1,0),
-    	'c':(0,0,1),
+        'z':(1,0,0,0),	#home
+        'x':(0,1,0,0),	#takePicte
+    	'c':(0,0,1,0),	#ModeChange
+		'y':(0,0,0,1),	#yaw follow
     }
 
 ValueBindings={
-        'q':(1,0,0,0),
-        'w':(0,1,0,0),
-        'e':(0,0,1,0),
-        'r':(0,0,0,1),
+        'q':(1,0,0,0),	#pithc
+        'w':(0,1,0,0),	#yaw
+        'e':(0,0,1,0),  #zoom
+        'r':(0,0,0,1), 	#focus
 		'a':(-1,0,0,0),
         's':(0,-1,0,0),
         'd':(0,0,-1,0),
@@ -49,10 +51,10 @@ def getKey():
  
 if __name__ == '__main__':
 	settings = termios.tcgetattr(sys.stdin)
-	pub = rospy.Publisher('/Cam_Ctr', GimbalCtl, queue_size = 1)
+	pub = rospy.Publisher('/GimbalCtl', GimbalCtl, queue_size = 1)
 	rospy.init_node('Send_Cam_Ctr_Message', anonymous = True)
-	pitch_speed = rospy.get_param("~pitch_speed", 5)
-	yaw_speed = rospy.get_param("~yaw_speed", 5)
+	pitch_speed = rospy.get_param("~pitch_speed", 10)
+	yaw_speed = rospy.get_param("~yaw_speed", 10)
 	zoom_speed = rospy.get_param("~zoom_speed", 1)
 	focus_speed = rospy.get_param("~focus_speed", 1)
 	print(pitch_speed)
@@ -67,6 +69,7 @@ if __name__ == '__main__':
 				msg.home = StatusBindings[key][0]
 				msg.TakePicture = StatusBindings[key][1]
 				msg.cameraModeChange = StatusBindings[key][2]
+				msg.yawfollow = StatusBindings[key][3]
 
 			elif key in ValueBindings.keys():
 				msg.pitch = ValueBindings[key][0]*pitch_speed
