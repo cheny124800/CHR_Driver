@@ -1,0 +1,1 @@
+/usr/bin/c++  -fPIC   -shared -Wl,-soname,libgtest_main.so -o libgtest_main.so CMakeFiles/gtest_main.dir/src/gtest_main.cc.o  -L/home/hlb/CHR_Driver/M600Ground/build/gtest/gtest/src -lpthread libgtest.so -lpthread -Wl,-rpath,/home/hlb/CHR_Driver/M600Ground/build/gtest/gtest/src:/home/hlb/CHR_Driver/M600Ground/build/gtest/gtest 

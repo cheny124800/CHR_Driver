@@ -1,0 +1,2 @@
+roblink_driver
+-DCATKIN_DEVEL_PREFIX=/home/hlb/CHR_Driver/M600Ground/devel -DCMAKE_INSTALL_PREFIX=/home/hlb/CHR_Driver/M600Ground/install -G Unix Makefiles

@@ -1,0 +1,8 @@
+prefix=/home/hlb/CHR_Driver/M600Ground/install
+
+Name: roblink_driver
+Description: Description of roblink_driver
+Version: 0.0.0
+Cflags: -I/home/hlb/CHR_Driver/M600Ground/install/include
+Libs: -L/home/hlb/CHR_Driver/M600Ground/install/lib 
+Requires: message_runtime
