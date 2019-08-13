@@ -231,7 +231,7 @@ void chatterCallback(const roblink_driver::GimbalCtl::ConstPtr& msg)
 			QuadCtl_send();			
 			std::cout << "send home cmd, clear Quad_home!" << "\r\n";
 		}
-		std::cout << "quad home:" << Quad_home<< "\r\n";
+		std::cout << "Quad_home:" << Quad_home<< "\r\n";
 		return;
 	}
 	
@@ -285,11 +285,13 @@ int main(int argc, char** argv)
   ros::NodeHandle n;
   //注册话题GimbalCtl
   ros::Subscriber sub = n.subscribe("GimbalCtl", 1000, chatterCallback);
-	
+  
+  std::string   temp_str; 	//临时变量	
+  ros::param::get("/serial_node/ser_Port", temp_str);	
   try
   {
     //串口设置
-    ser.setPort("/dev/ttyS1");
+    ser.setPort(temp_str);
     ser.setBaudrate(115200);
     serial::Timeout to = serial::Timeout::simpleTimeout(1000);
     ser.setTimeout(to);
@@ -376,7 +378,7 @@ int main(int argc, char** argv)
 		if(delay_1000ms >= 100) //100*10ms=1000ms
 		{
 			Quad_home = 0;
-			std::cout << "quad home:" << Quad_home<< "\r\n";
+			std::cout << "Quad_home:" << Quad_home<< "\r\n";
 		}
 	}
 	else
