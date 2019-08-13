@@ -1,0 +1,8 @@
+prefix=/home/dji/DJI_Onboard_Sdk/devel
+
+Name: dji_sdk
+Description: Description of dji_sdk
+Version: 3.2.0
+Cflags: -I/home/dji/DJI_Onboard_Sdk/devel/include -I/home/dji/DJI_Onboard_Sdk/src/Onboard-SDK-ROS/dji_sdk/include
+Libs: -L/home/dji/DJI_Onboard_Sdk/devel/lib 
+Requires: message_runtime geometry_msgs nav_msgs std_msgs nmea_msgs
