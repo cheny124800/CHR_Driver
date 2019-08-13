@@ -1,0 +1,12 @@
+std_msgs/UInt8 missionIndex
+geometry_msgs/Point hotpoint
+std_msgs/UInt8 startHotPoint
+std_msgs/UInt8 headingMode
+std_msgs/UInt16 altitude
+std_msgs/UInt8 angleVel
+std_msgs/UInt16 radius
+std_msgs/Int16 gimbalAngle
+std_msgs/UInt8 clockwise
+std_msgs/UInt8 isUseCam
+std_msgs/UInt8 sor
+std_msgs/UInt8 shootVel
