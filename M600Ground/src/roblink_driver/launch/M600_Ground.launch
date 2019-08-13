@@ -1,7 +1,8 @@
 <launch>
 	<node name="serial_node" pkg="roblink_driver" type="serialPort" output="screen">
+		<param name="ser_Port" value="/dev/ttyS1" />
 	</node>
 	
-	<node name="Send_Cam_Ctr_Message" pkg="roblink_driver" type="pubilsh.py">
+	<node name="Send_Cam_Ctr_Message" pkg="roblink_driver" type="pubilsh.py" output="screen">
 	</node>
 </launch>

@@ -61,14 +61,15 @@ if __name__ == '__main__':
 	yaw_speed = rospy.get_param("~yaw_speed", 10)
 	zoom_speed = rospy.get_param("~zoom_speed", 1)
 	focus_speed = rospy.get_param("~focus_speed", 1)
-	print(pitch_speed)
+	print(msg_tip)
+	#print(pitch_speed)
 	status = 0
 	try:
 		while(1):
 			msg = GimbalCtl()
-			print(msg_tip)
+			#print(msg_tip)
 			key = getKey()
-			rospy.loginfo(key)
+			#rospy.loginfo(key)
 			if key in StatusBindings.keys():
 				msg.home = StatusBindings[key][0]
 				msg.TakePicture = StatusBindings[key][1]
@@ -90,7 +91,7 @@ if __name__ == '__main__':
 				th = 0
 				if (key == '\x03'):
 					break
-			print(msg)
+			#print(msg)
 			pub.publish(msg)
 
 	except Exception as e:
