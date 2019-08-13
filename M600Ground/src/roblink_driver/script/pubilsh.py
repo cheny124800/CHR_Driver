@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #coding=utf-8
 from __future__ import print_function
 import rospy
@@ -18,6 +19,8 @@ uint16  home  'z'
 uint16  TakePicture 'x'
 uint16  cameraModeChange 'c'
 uint16  yawfollow 'y'
+
+uint16  home 'h' "three hit"
 ---------------------------
 CTRL-C to quit
 """
@@ -28,6 +31,7 @@ StatusBindings = {
         'x':(0,1,0,0),	#takePicte
     	'c':(0,0,1,0),	#ModeChange
 		'y':(0,0,0,1),	#yaw follow
+		'h':(1,0,0,0)	#quad home
     }
 
 ValueBindings={
@@ -70,6 +74,7 @@ if __name__ == '__main__':
 				msg.TakePicture = StatusBindings[key][1]
 				msg.cameraModeChange = StatusBindings[key][2]
 				msg.yawfollow = StatusBindings[key][3]
+				msg.quadhome = StatusBindings[key][0]
 
 			elif key in ValueBindings.keys():
 				msg.pitch = ValueBindings[key][0]*pitch_speed
