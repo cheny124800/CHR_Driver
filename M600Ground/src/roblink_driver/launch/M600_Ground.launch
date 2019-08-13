@@ -1,0 +1,7 @@
+<launch>
+	<node name="serial_node" pkg="roblink_driver" type="serialPort" output="screen">
+	</node>
+	
+	<node name="Send_Cam_Ctr_Message" pkg="roblink_driver" type="pubilsh.py">
+	</node>
+</launch>

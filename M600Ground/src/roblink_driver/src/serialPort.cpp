@@ -235,7 +235,6 @@ void chatterCallback(const roblink_driver::GimbalCtl::ConstPtr& msg)
 		return;
 	}
 	
-	
 	//云台控制指令
 	GimbalCtl_TypeDef GC_data;
 	uint8_t GimbalCtl_buffer[sizeof(GC_data)+1];	
