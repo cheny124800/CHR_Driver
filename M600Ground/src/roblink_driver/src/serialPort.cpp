@@ -85,6 +85,41 @@ void heartbeat_send(void)
 	data_out(heartbeat_buffer,sizeof(heartbeat_buffer));
 }
 
+
+/**********************************************************************************************
+函数名称: QuadCtl_TypeDef(void)
+功    能: 飞行器命令包
+输    入: null
+输    出: null
+备    注：输入数据为处理之后的数据，便于传输 
+**********************************************************************************************/
+#pragma pack(1)//设定为 1 字节对齐
+struct QuadCtl_TypeDef{
+	uint8_t  EmergencyFlag;
+	uint8_t  ModeFlag;
+	int16_t  Ref1;
+	int16_t  Ref2;
+	int16_t  Ref3;
+	int16_t  Ref4;
+};
+#pragma pack()
+QuadCtl_TypeDef QuadCtrl_data;
+void QuadCtl_send(void)
+{
+	//参数初始化
+	uint8_t QuadCtl_buffer[sizeof(QuadCtrl_data)+1];	
+	memset(QuadCtl_buffer,0,sizeof(QuadCtl_buffer));
+			
+	//消息包编号
+	QuadCtl_buffer[0]=0x10;
+	
+	//结构体数据转化为数组
+	memcpy(QuadCtl_buffer+1,&QuadCtrl_data,sizeof(QuadCtl_buffer));
+	
+	//数据打包与发送
+	data_out(QuadCtl_buffer,sizeof(QuadCtl_buffer));
+}
+
 /**********************************************************************************************
 函数名称 :  RecePro(uint8_t *data)
 功    能: 解析接收到的数据
@@ -175,9 +210,33 @@ struct GimbalCtl_TypeDef{
 };
 #pragma pack()
 
+int Quad_home = 0;
+
 void chatterCallback(const roblink_driver::GimbalCtl::ConstPtr& msg)
 {
-	//参数初始化
+	//返航指令
+	if(msg->quadhome == 1)
+	{
+		Quad_home++;
+		if(Quad_home>=3)
+		{
+			Quad_home = 0;
+			//发送一帧返航命令
+			QuadCtrl_data.EmergencyFlag = 1;
+			QuadCtrl_data.ModeFlag = 4;
+			QuadCtrl_data.Ref1 = 0;
+			QuadCtrl_data.Ref2 = 0;
+			QuadCtrl_data.Ref3 = 0;
+			QuadCtrl_data.Ref4 = 0;
+			QuadCtl_send();			
+			std::cout << "send home cmd, clear Quad_home!" << "\r\n";
+		}
+		std::cout << "quad home:" << Quad_home<< "\r\n";
+		return;
+	}
+	
+	
+	//云台控制指令
 	GimbalCtl_TypeDef GC_data;
 	uint8_t GimbalCtl_buffer[sizeof(GC_data)+1];	
 	memset(GimbalCtl_buffer,0,sizeof(GimbalCtl_buffer));
@@ -308,7 +367,23 @@ int main(int argc, char** argv)
     {		
 		debug_1000ms=0;  
 		heartbeat_send();
-	}	  
+	}
+		  
+	//返航必须1s之内完成动作
+	static int delay_1000ms=0;  
+	if(Quad_home>0)
+	{		
+		delay_1000ms++;
+		if(delay_1000ms >= 100) //100*10ms=1000ms
+		{
+			Quad_home = 0;
+			std::cout << "quad home:" << Quad_home<< "\r\n";
+		}
+	}
+	else
+	{
+		delay_1000ms=0;
+	}
 
     //断点数据分析，后期待删除
     static int debug_100ms=0;
