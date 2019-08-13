@@ -15,10 +15,8 @@
 
 /********        全局变量        **********/
 serial::Serial ser; //声明串口对象
-roblink_driver::GimbalCtl GimbalCtl_data;//全局变量，解析后数据
 int debug_break[10];
 float debug_break_float[10];
-ros::Publisher GimbalCtl_pub;
 
 
 /**********************************************************************************************
@@ -79,98 +77,13 @@ void data_out(uint8_t *data, uint8_t len)
 输    出: null
 日    期：2019.8.1
 作    者： 
-***************************************sizeof(GimbalCtl_data)*******************************************************/
+***************************************sizeof()*******************************************************/
 void heartbeat_send(void)
 {
 	uint8_t heartbeat_buffer[10];
 	memset(heartbeat_buffer,0,sizeof(heartbeat_buffer));
 	data_out(heartbeat_buffer,sizeof(heartbeat_buffer));
 }
-
-
-/**********************************************************************************************
-函数名称: GimbalCtl_send(void)
-功    能: 云台控制包
-输    入: null
-输    出: null
-备    注：输入数据为处理之后的数据，便于传输 
-**********************************************************************************************/
-#pragma pack(1)//设定为 1 字节对齐
-struct GimbalCtl_TypeDef{
-	int16_t pitch;
-	int16_t yaw;
-	int16_t zoom;
-	int16_t focus;
-	uint8_t  home;
-	uint8_t  TakePicture;
-	uint8_t  cameraModeChange;
-};
-#pragma pack()
-
-void GimbalCtl_send(void)
-{
-	//参数初始化
-	GimbalCtl_TypeDef GC_data;
-	uint8_t GimbalCtl_buffer[sizeof(GC_data)+1];	
-	memset(GimbalCtl_buffer,0,sizeof(GimbalCtl_buffer));
-		
-	//测试用，后期待删除
-	GimbalCtl_data.pitch = -0.3;
-	GimbalCtl_data.yaw = -0.5;
-	GimbalCtl_data.zoom = -5.1;
-	GimbalCtl_data.focus = 3.4;
-	GimbalCtl_data.home = 5;
-	GimbalCtl_data.TakePicture = 6;
-	GimbalCtl_data.cameraModeChange = 7;
-	
-	//消息包编号
-	GimbalCtl_buffer[0]=0x11;
-	
-	//消息数据
-	GC_data.pitch = GimbalCtl_data.pitch*10;
-	GC_data.yaw = GimbalCtl_data.yaw*10;
-	GC_data.zoom = GimbalCtl_data.zoom*10;
-	GC_data.focus = GimbalCtl_data.focus*10;
-	GC_data.home = GimbalCtl_data.home;
-	GC_data.TakePicture = GimbalCtl_data.TakePicture;
-	GC_data.cameraModeChange = GimbalCtl_data.cameraModeChange;
-	
-	//结构体数据转化为数组
-	memcpy(GimbalCtl_buffer+1,&GC_data,sizeof(GimbalCtl_buffer));
-	
-	//数据打包与发送
-	data_out(GimbalCtl_buffer,sizeof(GimbalCtl_buffer));
-}
-
-
-void GimbalCtl_decode(uint8_t *data)
-{
-	//参数初始化
-	GimbalCtl_TypeDef GC_data;
-	uint8_t GC_buffer[sizeof(GC_data)];
-	
-	//提取有效数据
-	memcpy(GC_buffer, &data[7], sizeof(GC_data));	
-	
-	//数组数据转化为结构体
-	memcpy(&GC_data,GC_buffer,sizeof(GC_buffer));
-
-	//根据协议缩放数据
-	GimbalCtl_data.pitch = GC_data.pitch*0.1;
-	GimbalCtl_data.yaw   = GC_data.yaw*0.1;
-	GimbalCtl_data.zoom  = GC_data.zoom*0.1;
-	GimbalCtl_data.focus = GC_data.focus*0.1;
-	GimbalCtl_data.home  = GC_data.home;
-	GimbalCtl_data.TakePicture = GC_data.TakePicture;
-	GimbalCtl_data.cameraModeChange = GC_data.cameraModeChange;
-	
-	//调试用，后期待删除
-	std::cout  << " out:"  << GimbalCtl_data.pitch << ", " << GimbalCtl_data.yaw << ", " << GimbalCtl_data.zoom << ", " << GimbalCtl_data.focus ;
-	std::cout  << ", "  << GimbalCtl_data.home << ", " << GimbalCtl_data.TakePicture<< ", " << GimbalCtl_data.cameraModeChange  << "\r\n";
-	
-	GimbalCtl_pub.publish(GimbalCtl_data);
-}
-
 
 /**********************************************************************************************
 函数名称 :  RecePro(uint8_t *data)
@@ -218,7 +131,7 @@ int  RecePro(uint8_t *data)
 	{
 		//云台控制
 		debug_break[1]++;
-		GimbalCtl_decode(data);
+		//GimbalCtl_decode(data);
 	}
 		
 	return 1;
@@ -241,6 +154,58 @@ int Receive_data_decode(uint8_t *buf_data,int len)
 	return out;
 }
 
+
+/**********************************************************************************************
+函数名称: GimbalCtl_send(void)
+功    能: 云台控制包
+输    入: null
+输    出: null
+备    注：输入数据为处理之后的数据，便于传输 
+**********************************************************************************************/
+#pragma pack(1)//设定为 1 字节对齐
+struct GimbalCtl_TypeDef{
+	int16_t pitch;
+	int16_t yaw;
+	int16_t zoom;
+	int16_t focus;
+	uint8_t home;
+	uint8_t TakePicture;
+	uint8_t cameraModeChange;
+	uint8_t yawfollow;
+};
+#pragma pack()
+
+void chatterCallback(const roblink_driver::GimbalCtl::ConstPtr& msg)
+{
+	//参数初始化
+	GimbalCtl_TypeDef GC_data;
+	uint8_t GimbalCtl_buffer[sizeof(GC_data)+1];	
+	memset(GimbalCtl_buffer,0,sizeof(GimbalCtl_buffer));
+	
+	//消息包编号
+	GimbalCtl_buffer[0]=0x11;
+	
+	//消息数据
+	GC_data.pitch = msg->pitch*10;
+	GC_data.yaw = msg->yaw*10;
+	GC_data.zoom = msg->zoom*10;
+	GC_data.focus = msg->focus*10;
+	GC_data.home = msg->home;
+	GC_data.TakePicture = msg->TakePicture;
+	GC_data.cameraModeChange = msg->cameraModeChange;
+	GC_data.yawfollow = msg->yawfollow;
+	
+	//结构体数据转化为数组
+	memcpy(GimbalCtl_buffer+1,&GC_data,sizeof(GimbalCtl_buffer));
+	
+	//数据打包与发送
+	data_out(GimbalCtl_buffer,sizeof(GimbalCtl_buffer));
+	
+	std::cout << "pit:" << msg->pitch << "\ty:" << msg->yaw << "\tzoom:" << msg->zoom << "\tfocus:" << msg->focus;
+	std::cout << "\thome:" << msg->home << " takePic:" << msg->TakePicture<< " modeC:" << msg->cameraModeChange<< " yawf:" << msg->yawfollow  << "\r\n";
+	
+}
+
 /**********************************************************************************************
 函数名称: main(int argc, char** argv)
 功    能: 主函数
@@ -259,14 +224,15 @@ int main(int argc, char** argv)
   //初始化节点
   ros::init(argc, argv, "serial_node");
   //声明节点句柄
-  ros::NodeHandle nh;
-  //注册Publisher到话题GimbalCtl
-  GimbalCtl_pub = nh.advertise<roblink_driver::GimbalCtl>("GimbalCtl",1000);
+  ros::NodeHandle n;
+  //注册话题GimbalCtl
+  ros::Subscriber sub = n.subscribe("GimbalCtl", 1000, chatterCallback);
+	
   try
   {
     //串口设置
     ser.setPort("/dev/ttyS1");
-    ser.setBaudrate(57600);
+    ser.setBaudrate(115200);
     serial::Timeout to = serial::Timeout::simpleTimeout(1000);
     ser.setTimeout(to);
     ser.open();
@@ -334,19 +300,23 @@ int main(int argc, char** argv)
 		memcpy(serial_buffer,buffer_temp,100);
 		serial_len=100; 
 	}
+	  
+    //1s定时器，心跳包发送
+    static int debug_1000ms=0;
+    debug_1000ms++;
+    if(debug_1000ms >= 100) //100*10ms=1000ms
+    {		
+		debug_1000ms=0;  
+		heartbeat_send();
+	}	  
 
     //断点数据分析，后期待删除
     static int debug_100ms=0;
     debug_100ms++;
     if(debug_100ms >= 10) //10*10ms=100ms
     {
-     	//std::cout << std::dec << " b1:" << debug_break[0]<< " b2:" << debug_break[1]<< " len_sub:" << len_sub << " len:" << serial_len  << "\r\n";	
-      	//std::cout << "f1:" << debug_break_float[0]<< " f2:" << debug_break_float[1] << " f3:" << debug_break_float[2]  << "\r\n";
-      	//std::cout << " b1:" << sizeof(GimbalCtl_data)<< " b2:" << sizeof(GimbalCtl_data)<< " b3:" << debug_break[2]  << "\r\n";	
-		
-		debug_100ms=0;    
-   
-		GimbalCtl_send();
+     	//std::cout << std::dec << " b1:" << debug_break[0]<< " b2:" << debug_break[1]<< " len_sub:" << len_sub << " len:" << serial_len  << "\r\n";			
+		debug_100ms=0;  
 	}
 	  
     ros::spinOnce();

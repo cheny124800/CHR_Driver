@@ -51,7 +51,6 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
  add_message_files(
    FILES
-   GPS.msg
    GimbalCtl.msg
  )
 
@@ -160,9 +159,6 @@ add_executable(Q10F src/Q10F.cpp)
 target_link_libraries(Q10F ${catkin_LIBRARIES})
 add_dependencies(Q10F ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_executable(listener src/listener.cpp)
-target_link_libraries(listener ${catkin_LIBRARIES})
-add_dependencies(listener ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
