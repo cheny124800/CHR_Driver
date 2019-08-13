@@ -1,0 +1,14 @@
+std_msgs/UInt8 missionIndex
+std_msgs/UInt8 latLntCount
+geometry_msgs/Point[] latLntList
+std_msgs/UInt8 actionCount
+geometry_msgs/Point[] waypointAction
+std_msgs/UInt16 altitude
+std_msgs/UInt8 velocity
+std_msgs/UInt8 finishAction
+std_msgs/UInt8 headingMode
+std_msgs/Int16 gimbalAngle
+std_msgs/UInt8 repeatTimes
+std_msgs/UInt8 isUseCam
+std_msgs/UInt8 sor
+std_msgs/UInt8 shootVel

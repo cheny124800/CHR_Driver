@@ -1,0 +1,13 @@
+# Target labels
+ Onboard-SDK
+# Source files and their labels
+/home/dji/DJI_Onboard_Sdk/src/Onboard-SDK-ROS/cmake-modules/build/CMakeFiles/Onboard-SDK
+/home/dji/DJI_Onboard_Sdk/src/Onboard-SDK-ROS/cmake-modules/build/CMakeFiles/Onboard-SDK.rule
+/home/dji/DJI_Onboard_Sdk/src/Onboard-SDK-ROS/cmake-modules/build/CMakeFiles/Onboard-SDK-complete.rule
+/home/dji/DJI_Onboard_Sdk/src/Onboard-SDK-ROS/cmake-modules/build/Onboard-SDK-prefix/src/Onboard-SDK-stamp/Onboard-SDK-install.rule
+/home/dji/DJI_Onboard_Sdk/src/Onboard-SDK-ROS/cmake-modules/build/Onboard-SDK-prefix/src/Onboard-SDK-stamp/Onboard-SDK-mkdir.rule
+/home/dji/DJI_Onboard_Sdk/src/Onboard-SDK-ROS/cmake-modules/build/Onboard-SDK-prefix/src/Onboard-SDK-stamp/Onboard-SDK-download.rule
+/home/dji/DJI_Onboard_Sdk/src/Onboard-SDK-ROS/cmake-modules/build/Onboard-SDK-prefix/src/Onboard-SDK-stamp/Onboard-SDK-update.rule
+/home/dji/DJI_Onboard_Sdk/src/Onboard-SDK-ROS/cmake-modules/build/Onboard-SDK-prefix/src/Onboard-SDK-stamp/Onboard-SDK-patch.rule
+/home/dji/DJI_Onboard_Sdk/src/Onboard-SDK-ROS/cmake-modules/build/Onboard-SDK-prefix/src/Onboard-SDK-stamp/Onboard-SDK-configure.rule
+/home/dji/DJI_Onboard_Sdk/src/Onboard-SDK-ROS/cmake-modules/build/Onboard-SDK-prefix/src/Onboard-SDK-stamp/Onboard-SDK-build.rule
